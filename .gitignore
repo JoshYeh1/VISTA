@@ -1,5 +1,15 @@
+# Meta Aria SDK
 projectaria_tools/
+
+# Python
 *.pyc
 __pycache__/
+
+# C++ build
 build/
 
+# macOS
+.DS_Store
+
+# IDEs
+.vscode/
