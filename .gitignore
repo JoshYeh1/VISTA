@@ -1,0 +1,5 @@
+projectaria_tools/
+*.pyc
+__pycache__/
+build/
+

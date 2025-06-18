@@ -1,76 +1,74 @@
 import cv2
 import os
 import json
+from projectaria_tools import VRSReader
 
 # === CONFIG ===
-VIDEO_DIR = "videos"
-IMAGE_DIR = "images"
+VRS_DIR = "vrs_raw" #input videos folder
+IMAGE_DIR = "images" #input images folder
 ANNOTATION_FILE = "annotations/object_location.jsonl"
-FRAME_INTERVAL_SECONDS = 1  # extract one frame per second
+FRAME_INTERVAL_SECONDS = 1  #extracts one frame per second
 
 # Ensure image and annotation folders exist
 os.makedirs(IMAGE_DIR, exist_ok=True)
 os.makedirs(os.path.dirname(ANNOTATION_FILE), exist_ok=True)
 
-# === FUNCTION TO EXTRACT FRAMES AND GENERATE ANNOTATION ENTRIES ===
-def extract_frames_and_label(video_path, frame_interval, video_id):
-    cap = cv2.VideoCapture(video_path)
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    frame_interval_frames = int(fps * frame_interval)
+# reads file, finds frames to extract and labels them
 
-    count = 0
+def extract_frames_and_annotate(vrs_path, frame_interval_s, video_id):
+    reader = VRSReader(vrs_path)
+    rgb_stream_id = reader.get_streams_by_type("camera-rgb")[0]
+
+    last_saved_ns = 0
+    interval_ns = int(frame_interval_s * 1e9)
     frame_index = 0
     annotations = []
 
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        if count % frame_interval_frames == 0:
+    for data in reader.get_stream_data(rgb_stream_id):
+        ts = data.timestamp_ns
+        if ts - last_saved_ns >= interval_ns:
+            image = data.image_data_to_cv_mat()
             image_name = f"{video_id}_frame_{frame_index:03d}.jpg"
             image_path = os.path.join(IMAGE_DIR, image_name)
-            cv2.imwrite(image_path, frame)
+            cv2.imwrite(image_path, image)
 
-            # Create a starter annotation with placeholders
             annotation = {
                 "id": f"{video_id}_F{frame_index}",
                 "video_id": video_id,
                 "frame_index": frame_index,
                 "scene_image": image_path,
                 "user_query": "Where is my phone?",
-                "descriptive_ground_truth": "",  # Fill this in later
-                "action_ground_truth": "",        # Fill this in later
+                "descriptive_ground_truth": "",
+                "action_ground_truth": "",
                 "task_type": "object_localization",
                 "environment": "indoor",
                 "lighting": "unknown",
                 "measurable_result": "Object location accuracy and spatial reference",
                 "future_fields": {
-                    "timestamp": round(count / fps, 2),
-                    "video_path": video_path
+                    "timestamp": round(ts / 1e9, 2),
+                    "video_path": vrs_path
                 }
             }
+
             annotations.append(annotation)
+            last_saved_ns = ts
             frame_index += 1
 
-        count += 1
-
-    cap.release()
     return annotations
 
-# === MAIN LOOP ===
+# === MAIN ===
 all_annotations = []
-for filename in os.listdir(VIDEO_DIR):
-    if filename.lower().endswith((".mp4", ".mov")):
-        video_path = os.path.join(VIDEO_DIR, filename)
+for filename in os.listdir(VRS_DIR):
+    if filename.endswith(".vrs"):
+        vrs_path = os.path.join(VRS_DIR, filename)
         video_id = os.path.splitext(filename)[0]
         print(f"Processing {video_id}...")
-        annotations = extract_frames_and_label(video_path, FRAME_INTERVAL_SECONDS, video_id)
+        annotations = extract_frames_and_annotate(vrs_path, FRAME_INTERVAL_SECONDS, video_id)
         all_annotations.extend(annotations)
 
-# Save annotations as JSONL
+# Save annotations
 with open(ANNOTATION_FILE, "w") as f:
-    for entry in all_annotations:
-        f.write(json.dumps(entry) + "\n")
+    for ann in all_annotations:
+        f.write(json.dumps(ann) + "\n")
 
-print(f"Extracted frames saved to `{IMAGE_DIR}` and annotations to `{ANNOTATION_FILE}`")
+print(f"Saved {len(all_annotations)} annotations to {ANNOTATION_FILE}")

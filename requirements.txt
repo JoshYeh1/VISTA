@@ -17,3 +17,6 @@ transformers
 
 #For interactive annotation or GUI later
 label-studio  # optional GUI annotation tool
+
+#For Aria Glasses
+projectaria-tools
