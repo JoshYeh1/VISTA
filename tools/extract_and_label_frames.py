@@ -73,4 +73,4 @@ with open(ANNOTATION_FILE, "w") as f:
     for entry in all_annotations:
         f.write(json.dumps(entry) + "\n")
 
-print(f"✅ Done! Extracted frames saved to `{IMAGE_DIR}` and annotations to `{ANNOTATION_FILE}`")
+print(f"Extracted frames saved to `{IMAGE_DIR}` and annotations to `{ANNOTATION_FILE}`")

@@ -3,17 +3,17 @@ numpy
 Pillow
 jsonlines
 
-# Optional: progress bars and CLI helpers
+#Optional - progress bars and CLI helpers
 tqdm
 typer[all]
 
-# If you decide to add evaluation later
+#For evaluation
 nltk
 scikit-learn
 
-# For VLM inference (optional, if running models locally)
+#For VLM inference (optional if running models locally)
 torch
 transformers
 
-# For interactive annotation or GUI later
+#For interactive annotation or GUI later
 label-studio  # optional GUI annotation tool

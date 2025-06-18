@@ -1,2 +1,2 @@
 # VISTA
-#Visually Impaired Scene & Task Annotations
+Visually Impaired Scene & Task Annotations
