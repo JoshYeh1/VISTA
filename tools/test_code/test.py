@@ -2,10 +2,6 @@ import sys
 import os 
 import json
 import cv2
-#Adding projectaria_tools repo 
-repo_path = os.path.abspath(os.path.join(os.getcwd(),"../../extract_dataset/"))
-sys.path.insert(0,repo_path)
-print(repo_path)
 
 #Aria SDK imports
 from projectaria_tools.core import data_provider, calibration
@@ -13,11 +9,14 @@ from projectaria_tools.core.sensor_data import TimeDomain, TimeQueryOptions
 from projectaria_tools.core.stream_id import RecordableTypeId, StreamId
 from projectaria_tools.core import data_provider, image
 from projectaria_tools.core.stream_id import StreamId
-2
+
 #Other imports 
 import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image
+
+from aria_color_correct import color_correct
+
 
 vrs_file = "/Users/joshuayeh/dataset_project/VISTA/data/raw/vrs/20250618_objectloc_office.vrs"
 output_folder = "/Users/joshuayeh/dataset_project/VISTA/data/processed/"
@@ -60,8 +59,8 @@ options.set_truncate_last_device_time_ns(int(1e9))  # 1 sec before vrs last time
 options.deactivate_stream_all() # deactivate all sensors
 
 # activate only a subset of sensors
-rgb_stream_id = provider.get_stream_id_from_label("camera-rgb")  #activate RGB image stream
 provider.set_color_correction(True)
+rgb_stream_id = provider.get_stream_id_from_label("camera-rgb")  #activate RGB image stream
 options.activate_stream(rgb_stream_id)
 options.set_subsample_rate(rgb_stream_id, 1)  # Use every frame
 
@@ -112,10 +111,13 @@ annotations = []
 for frame_idx in range(num_images):
     image_data = provider.get_image_data_by_index(stream_id, frame_idx)
     img = image_data[0].to_numpy_array()
+    rot_img = np.rot90(img,k=3)
+    corrected_img = color_correct(rot_img)
+
     timestamp_ns = image_data[1].capture_timestamp_ns
 
     img_filename = f"{meta['id']}_{frame_idx:02d}.jpg" #Save Image
-    cv2.imwrite(os.path.join(images_folder, img_filename), img)
+    cv2.imwrite(os.path.join(images_folder, img_filename), corrected_img)
     print(f"Saved frame {frame_idx}: {img_filename} | timestamp: {timestamp_ns}")
 
     #find closest imu data
