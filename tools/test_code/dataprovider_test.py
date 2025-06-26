@@ -1,3 +1,5 @@
+#Code taken from projectaria_tools github Google colab
+
 import sys
 import os 
 
@@ -7,18 +9,13 @@ sys.path.insert(0,repo_path)
 print(repo_path)
 
 #Aria SDK imports
-from projectaria_tools.core import data_provider, calibration
-from projectaria_tools.core.image import InterpolationMethod
-from projectaria_tools.core.sensor_data import TimeDomain, TimeQueryOptions
-from projectaria_tools.core.stream_id import RecordableTypeId, StreamId
+from projectaria_tools.core import data_provider
+from projectaria_tools.core.stream_id import StreamId
 
 #Other imports 
-import numpy as np
 from matplotlib import pyplot as plt
-from PIL import Image
-import cv2
 
-vrs_file = "/Users/joshuayeh/dataset_project/VISTA/data/raw/vrs/20250618_objectloc_office.vrs"
+vrs_file = "/Users/joshuayeh/dataset_project/VISTA/data/raw/20250618_objectloc_office.vrs"
 
 print(f"Creating data provider from {vrs_file}")
 provider = data_provider.create_vrs_data_provider(vrs_file)
