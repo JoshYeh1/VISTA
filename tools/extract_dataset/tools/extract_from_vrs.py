@@ -1,10 +1,8 @@
 # Program that extracts image, imu data and audio fom aria .vrs file
-# 9/30/25 Note: Issue with audio, soluton in progress
-
-import os, json, csv, wave, argparse, pathlib, cv2, numpy as np
+# use cmd line arguments to specify .vrs file location, output folder, id name, test type,
+# and number of key frames
+import json, csv, wave, argparse, pathlib, cv2, numpy as np
 from projectaria_tools.core import data_provider
-from projectaria_tools.core.sensor_data import TimeDomain
-from projectaria_tools.core.stream_id import RecordableTypeId, StreamId
 
 # -------------------- CLI --------------------
 parser = argparse.ArgumentParser()
@@ -26,31 +24,40 @@ provider = data_provider.create_vrs_data_provider(args.vrs)
 if provider is None:
     raise RuntimeError("Invalid VRS file")
 
-# ------------ AUDIO → WAV -------------------
-mic_sid   = provider.get_stream_id_from_label("mic")
-n_audio   = provider.get_num_data(mic_sid)
-sample_block = provider.get_audio_data_by_index(mic_sid, 0)
-n_channels   = 7
-sample_rate  = 48000
-samples      = []
+# ------------ AUDIO to WAV -------------------
+mic_sid = provider.get_stream_id_from_label("mic")
+n_audio = provider.get_num_data(mic_sid)
 
+output_wav = annotations_folder / "audio.wav"
+sample_rate = 48000
+n_channels = 7  # change this if your setup uses a different count
+
+# Load audio blocks
+samples = []
 for i in range(n_audio):
-    block = provider.get_audio_data_by_index(mic_sid, i)[0].data   # float32 [-1,1]
-    samples.append(block)
+    audio_data = provider.get_audio_data_by_index(mic_sid, i)
+    raw_block = audio_data[0].data
+    samples.append(np.asarray(raw_block, dtype=np.int32))
 
-audio_np = np.concatenate(samples).astype(np.float32).reshape(-1, n_channels)
-# NOTE: wave supports only integer PCM.  Convert to 16-bit signed:
-pcm16 = np.int16(np.clip(audio_np, -1, 1) * 32767)
+# Flatten and reshape
+flat_audio = np.concatenate(samples)
+assert len(flat_audio) % n_channels == 0, "Audio length not divisible by number of channels"
+multi_audio = flat_audio.reshape(-1, n_channels)
 
-wav_path = annotations_folder / "audio.wav"
-with wave.open(str(wav_path), "wb") as wf:
+# Normalize to 16-bit PCM
+max_val = np.max(np.abs(multi_audio))
+pcm16 = ((multi_audio / max_val) * 32767).astype(np.int16)
+
+# Save to .wav
+with wave.open(str(annotations_folder / output_wav), "wb") as wf:
     wf.setnchannels(n_channels)
-    wf.setsampwidth(2)                 # 16 bit PCM
+    wf.setsampwidth(2)  # 16-bit
     wf.setframerate(sample_rate)
     wf.writeframes(pcm16.tobytes())
-print(f"Wrote {wav_path}  ({sample_rate} Hz, {n_channels} ch)")
 
-# --------------- IMU → CSV ------------------
+print(f"Wrote multichannel audio to: {output_wav} ({n_channels} ch, {sample_rate} Hz)")
+
+# --------------- IMU to CSV ------------------
 imu_sid   = provider.get_stream_id_from_label("imu-left")
 n_imu     = provider.get_num_data(imu_sid)
 imu_csv   = annotations_folder / "imu_left.csv"
@@ -122,7 +129,7 @@ for idx in indices:
         "scene_image": f"images/{fname}",
         "timestamp_ns": ts_ns,
         "imu_row": imu_idx, # pointer into imu_left.csv
-        "audio_file": "annotations/audio.wav",
+        "audio_file": str(output_wav.relative_to(out_path)),
         **meta
     }
     annotations.append(annotation)
@@ -132,3 +139,4 @@ with open(annotations_folder / "annotations.json", "w") as f:
     json.dump({"annotations": annotations}, f, indent=2)
 
 print("Done")
+
