@@ -1,146 +1,134 @@
+# Program that extracts image, imu data and audio fom aria .vrs file
+# 9/30/25 Note: Issue with audio, soluton in progress
 
-# Program that extracts image and other data fom aria .vrs file
-# Note: Image output from this program have blue tint. Solution in progress
-# Future improvements: Add command line arguments for changing test case ID, output directory and .vrs file path
-import sys
-import os 
-import json
-import cv2
-
-#Aria SDK imports
-from projectaria_tools.core import data_provider, calibration
-from projectaria_tools.core.sensor_data import TimeDomain, TimeQueryOptions
+import os, json, csv, wave, argparse, pathlib, cv2, numpy as np
+from projectaria_tools.core import data_provider
+from projectaria_tools.core.sensor_data import TimeDomain
 from projectaria_tools.core.stream_id import RecordableTypeId, StreamId
-from projectaria_tools.core import data_provider, image
-from projectaria_tools.core.stream_id import StreamId
 
-#Other imports 
-import numpy as np
-from matplotlib import pyplot as plt
-from PIL import Image
+# -------------------- CLI --------------------
+parser = argparse.ArgumentParser()
+parser.add_argument("--vrs", default="/Users/joshuayeh/dataset_project/VISTA/data/raw/20250618_objectloc_office.vrs")
+parser.add_argument("--output", default="/Users/joshuayeh/dataset_project/VISTA/data/dataset/TC01_object_localization/TC01_00/")
+parser.add_argument("--test_case_id", default="TC01_00")
+parser.add_argument("--test_type", default="Object Location")
+parser.add_argument("--key_frames", type=int, default=5,
+                    help="How many RGB frames to annotate")
+args = parser.parse_args()
+out_path = pathlib.Path(args.output)
+images_folder = out_path / "images"
+annotations_folder = out_path
+images_folder.mkdir(parents=True, exist_ok=True)
+annotations_folder.mkdir(exist_ok=True)
 
-#vrs_file = "/Users/joshuayeh/dataset_project/VISTA/data/raw/vrs/20250618_objectloc_office.vrs"
-vrs_file = "/Users/joshuayeh/dataset_project/VISTA/data/raw/vrs/Object_localization_test.vrs"
-output_folder = "/Users/joshuayeh/dataset_project/VISTA/data/processed/"
+# ----------------- Open provider -------------
+provider = data_provider.create_vrs_data_provider(args.vrs)
+if provider is None:
+    raise RuntimeError("Invalid VRS file")
 
-print(f"Creating data provider from {vrs_file}")
-provider = data_provider.create_vrs_data_provider(vrs_file)
-if not provider:
-    print(f"Invalid vrs dataprovider")
+# ------------ AUDIO → WAV -------------------
+mic_sid   = provider.get_stream_id_from_label("mic")
+n_audio   = provider.get_num_data(mic_sid)
+sample_block = provider.get_audio_data_by_index(mic_sid, 0)
+n_channels   = 7
+sample_rate  = 48000
+samples      = []
 
-stream_mappings = {
-    "camera-slam-left": StreamId("1201-1"),
-    "camera-slam-right": StreamId("1201-2"),
-    "camera-rgb": StreamId("214-1"),
-    "camera-eyetracking": StreamId("211-1")
-}
+for i in range(n_audio):
+    block = provider.get_audio_data_by_index(mic_sid, i)[0].data   # float32 [-1,1]
+    samples.append(block)
 
+audio_np = np.concatenate(samples).astype(np.float32).reshape(-1, n_channels)
+# NOTE: wave supports only integer PCM.  Convert to 16-bit signed:
+pcm16 = np.int16(np.clip(audio_np, -1, 1) * 32767)
+
+wav_path = annotations_folder / "audio.wav"
+with wave.open(str(wav_path), "wb") as wf:
+    wf.setnchannels(n_channels)
+    wf.setsampwidth(2)                 # 16 bit PCM
+    wf.setframerate(sample_rate)
+    wf.writeframes(pcm16.tobytes())
+print(f"Wrote {wav_path}  ({sample_rate} Hz, {n_channels} ch)")
+
+# --------------- IMU → CSV ------------------
+imu_sid   = provider.get_stream_id_from_label("imu-left")
+n_imu     = provider.get_num_data(imu_sid)
+imu_csv   = annotations_folder / "imu_left.csv"
+with open(imu_csv, "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["timestamp_ns",
+                     "accel_x","accel_y","accel_z",
+                     "gyro_x","gyro_y","gyro_z"])
+    for i in range(n_imu):
+        d = provider.get_imu_data_by_index(imu_sid, i)
+        writer.writerow([d.capture_timestamp_ns,
+                         *d.accel_msec2, *d.gyro_radsec])
+print(f"Wrote {imu_csv}  ({n_imu} rows)")
+
+# ------------- RGB key-frames ---------------
+rgb_sid    = provider.get_stream_id_from_label("camera-rgb")
+n_images   = provider.get_num_data(rgb_sid)
+indices    = np.linspace(0, n_images-1, args.key_frames, dtype=int)
+
+# common meta, shortened here for clarity
 meta = {
-    "id": "TC01_03",
-    "test_case": "Object Location",
-    "setup_description": "4 objects on a wooden table: phone, keys, glasses, charger",
+    "id": f"{args.test_case_id}",
+    "dataset_version": 1.0,
+    "collection_date": "2025-06-18",
+    "fps": 10,
+    "camera_resolution": [1408, 1408],
+    "test_case": args.test_type,
+    "setup_description": "4 objects on a table: plastic bottle, phone, leather journal, headphones, pen",
     "user_query": "Where is my phone?",
-    "descriptive_ground_truth": "Your phone is infront of you, bewtween the bottle and the pen.",
-    "action_ground_truth": "Reach infront of you, between the bottle and the pen.",
+    "descriptive_ground_truth": "Your phone is in front of you, between the bottle and the pen.",
+    "action_ground_truth": "Reach in front of you, between the bottle and the pen.",
     "task_type": "object_localization",
     "environment": "indoor",
-    "lighting": "natural",
+    "lighting": "fluorescent",
     "distance_to_target": 0.6096,
+    "model_description_output": None,
+    "model_action_output": None,
+    "description_score": None,
+    "action_score": None,
+    "evaluation_method": None,
     "measurable_result": "location accuracy and spatial reference",
-    "human_score": None
+    "human_score": {
+        "description_accuracy": None,
+        "action_usefulness": None,
+        "confidence": None
+    }
 }
 
-options = (
-    provider.get_default_deliver_queued_options()
-) #default options activates all streams and plays back all data in full resolution
-
-#Limit playback to start 0.1 seconds after the beginning of the .vrs file
-options.set_truncate_first_device_time_ns(int(1e8))  # 0.1 secs after vrs first timestamp
-options.set_truncate_last_device_time_ns(int(1e9))  # 1 sec before vrs last timestamp
-
-options.deactivate_stream_all() # deactivate all sensors
-
-# activate only a subset of sensors
-provider.set_color_correction(True)
-rgb_stream_id = provider.get_stream_id_from_label("camera-rgb")  #activate RGB image stream
-options.activate_stream(rgb_stream_id)
-options.set_subsample_rate(rgb_stream_id, 1)  # Use every frame
-
-# Activate IMUs
-imu_stream_ids = options.get_stream_ids(RecordableTypeId.SLAM_IMU_DATA)
-for stream_id in imu_stream_ids:
-    options.activate_stream(stream_id)
-    options.set_subsample_rate(stream_id, 10)
-
-
-iterator = provider.deliver_queued_sensor_data(options)
-annotations = []
-frame_idx = 0
-images_folder = os.path.join(output_folder, "images")
-annotations_folder = os.path.join(output_folder,"annotations")
-os.makedirs(images_folder, exist_ok=True)
-os.makedirs(annotations_folder, exist_ok=True)
-
-# Extract IMU data from 'imu-left'
-imu_stream_id = provider.get_stream_id_from_label("imu-left")
-
-accel_x, accel_y, accel_z = [], [], []
-gyro_x, gyro_y, gyro_z = [], [], []
+# Preload all IMU timestamps so we can look up closest match later
 imu_timestamps = []
+for i in range(n_imu):
+    d = provider.get_imu_data_by_index(imu_sid, i)
+    imu_timestamps.append(d.capture_timestamp_ns)
 
-for index in range(provider.get_num_data(imu_stream_id)):
-    imu_data_obj = provider.get_imu_data_by_index(imu_stream_id, index)
-    accel_x.append(imu_data_obj.accel_msec2[0])
-    accel_y.append(imu_data_obj.accel_msec2[1])
-    accel_z.append(imu_data_obj.accel_msec2[2])
-    gyro_x.append(imu_data_obj.gyro_radsec[0])
-    gyro_y.append(imu_data_obj.gyro_radsec[1])
-    gyro_z.append(imu_data_obj.gyro_radsec[2])
-    imu_timestamps.append(imu_data_obj.capture_timestamp_ns)
-
-# Optionally keep this if you're using audio timestamps
-audio_timestamps = []
-iterator = provider.deliver_queued_sensor_data(options)
-for sensor_data in iterator:
-    if sensor_data.sensor_data_type().name == "AUDIO":
-        audio_timestamps.append(sensor_data.get_time_ns(TimeDomain.DEVICE_TIME))
-
-# Reset iterator to stream image data only
-stream_id = provider.get_stream_id_from_label("camera-rgb")
-num_images = provider.get_num_data(stream_id)
 
 annotations = []
-for frame_idx in range(num_images):
-    image_data = provider.get_image_data_by_index(stream_id, frame_idx)
-    img = image_data[0].to_numpy_array()
-    rot_img = np.rot90(img,k=3)
-    timestamp_ns = image_data[1].capture_timestamp_ns
+for idx in indices:
+    img_data = provider.get_image_data_by_index(rgb_sid, idx)
+    img      = cv2.cvtColor(np.rot90(img_data[0].to_numpy_array(), 3),
+                            cv2.COLOR_RGB2BGR)
+    ts_ns    = img_data[1].capture_timestamp_ns
+    fname    = f"{meta['id']}_{idx:04d}.jpg"
+    cv2.imwrite(str(images_folder / fname), img)
 
-    img_filename = f"{meta['id']}_{frame_idx:02d}.jpg" #Save Image
-    cv2.imwrite(os.path.join(images_folder, img_filename), rot_img)
-    print(f"Saved frame {frame_idx}: {img_filename} | timestamp: {timestamp_ns}")
-
-    #find closest imu data
-    closest_idx = min(range(len(imu_timestamps)), key=lambda i: abs(imu_timestamps[i] - timestamp_ns))
-    closest_imu = {
-    "timestamp_ns": imu_timestamps[closest_idx],
-    "accel": [accel_x[closest_idx], accel_y[closest_idx], accel_z[closest_idx]],
-    "gyro": [gyro_x[closest_idx], gyro_y[closest_idx], gyro_z[closest_idx]]
-    }
-
-    #find closest audio timestamp
-    closest_audio_ts = min(audio_timestamps, key=lambda x: abs(x - timestamp_ns)) if audio_timestamps else None
+    # Find the closest IMU index based on timestamp
+    imu_idx = min(range(n_imu), key=lambda i: abs(imu_timestamps[i] - ts_ns))
 
     annotation = {
-        "scene_image": f"images/{img_filename}",
-        "timestamp_ns": timestamp_ns,
-        "imu": closest_imu,
-        "audio_timestamp_ns": closest_audio_ts,
+        "scene_image": f"images/{fname}",
+        "timestamp_ns": ts_ns,
+        "imu_row": imu_idx, # pointer into imu_left.csv
+        "audio_file": "annotations/audio.wav",
         **meta
     }
-
     annotations.append(annotation)
-    frame_idx += 1
+    print(f"Saved key-frame {idx} ({fname})")
 
-with open(os.path.join(annotations_folder, "annotations.json"), "w") as f:
+with open(annotations_folder / "annotations.json", "w") as f:
     json.dump({"annotations": annotations}, f, indent=2)
+
+print("Done")

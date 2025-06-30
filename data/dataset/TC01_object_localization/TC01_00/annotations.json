@@ -1,0 +1,174 @@
+{
+  "annotations": [
+    {
+      "scene_image": "images/TC01_00_0000.jpg",
+      "timestamp_ns": 1342481456012,
+      "imu_row": 21,
+      "audio_file": "annotations/audio.wav",
+      "id": "TC01_00",
+      "dataset_version": 1.0,
+      "collection_date": "2025-06-18",
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Object Location",
+      "setup_description": "4 objects on a table: plastic bottle, phone, leather journal, headphones, pen",
+      "user_query": "Where is my phone?",
+      "descriptive_ground_truth": "Your phone is in front of you, between the bottle and the pen.",
+      "action_ground_truth": "Reach in front of you, between the bottle and the pen.",
+      "task_type": "object_localization",
+      "environment": "indoor",
+      "lighting": "fluorescent",
+      "distance_to_target": 0.6096,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC01_00_0025.jpg",
+      "timestamp_ns": 1344981451312,
+      "imu_row": 2043,
+      "audio_file": "annotations/audio.wav",
+      "id": "TC01_00",
+      "dataset_version": 1.0,
+      "collection_date": "2025-06-18",
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Object Location",
+      "setup_description": "4 objects on a table: plastic bottle, phone, leather journal, headphones, pen",
+      "user_query": "Where is my phone?",
+      "descriptive_ground_truth": "Your phone is in front of you, between the bottle and the pen.",
+      "action_ground_truth": "Reach in front of you, between the bottle and the pen.",
+      "task_type": "object_localization",
+      "environment": "indoor",
+      "lighting": "fluorescent",
+      "distance_to_target": 0.6096,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC01_00_0051.jpg",
+      "timestamp_ns": 1347581459887,
+      "imu_row": 4144,
+      "audio_file": "annotations/audio.wav",
+      "id": "TC01_00",
+      "dataset_version": 1.0,
+      "collection_date": "2025-06-18",
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Object Location",
+      "setup_description": "4 objects on a table: plastic bottle, phone, leather journal, headphones, pen",
+      "user_query": "Where is my phone?",
+      "descriptive_ground_truth": "Your phone is in front of you, between the bottle and the pen.",
+      "action_ground_truth": "Reach in front of you, between the bottle and the pen.",
+      "task_type": "object_localization",
+      "environment": "indoor",
+      "lighting": "fluorescent",
+      "distance_to_target": 0.6096,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC01_00_0076.jpg",
+      "timestamp_ns": 1350081467475,
+      "imu_row": 6165,
+      "audio_file": "annotations/audio.wav",
+      "id": "TC01_00",
+      "dataset_version": 1.0,
+      "collection_date": "2025-06-18",
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Object Location",
+      "setup_description": "4 objects on a table: plastic bottle, phone, leather journal, headphones, pen",
+      "user_query": "Where is my phone?",
+      "descriptive_ground_truth": "Your phone is in front of you, between the bottle and the pen.",
+      "action_ground_truth": "Reach in front of you, between the bottle and the pen.",
+      "task_type": "object_localization",
+      "environment": "indoor",
+      "lighting": "fluorescent",
+      "distance_to_target": 0.6096,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC01_00_0102.jpg",
+      "timestamp_ns": 1352681456312,
+      "imu_row": 8267,
+      "audio_file": "annotations/audio.wav",
+      "id": "TC01_00",
+      "dataset_version": 1.0,
+      "collection_date": "2025-06-18",
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Object Location",
+      "setup_description": "4 objects on a table: plastic bottle, phone, leather journal, headphones, pen",
+      "user_query": "Where is my phone?",
+      "descriptive_ground_truth": "Your phone is in front of you, between the bottle and the pen.",
+      "action_ground_truth": "Reach in front of you, between the bottle and the pen.",
+      "task_type": "object_localization",
+      "environment": "indoor",
+      "lighting": "fluorescent",
+      "distance_to_target": 0.6096,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    }
+  ]
+}
