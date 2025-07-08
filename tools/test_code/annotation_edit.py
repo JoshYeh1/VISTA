@@ -3,8 +3,8 @@ import os
 import cv2
 
 # === Config ===
-json_path = "/Users/joshuayeh/dataset_project/VISTA/data/dataset/TC01_object_localization/TC01_01/annotations.json"  # Path to your JSON metadata
-image_root = "/Users/joshuayeh/dataset_project/VISTA/data/dataset/TC01_object_localization/TC01_01/"  # Root folder containing the 'images/' folder
+json_path = "/Users/joshuayeh/dataset_project/VISTA/data/processed/TC01_object_localization/TC01_01/annotations.json"  # Path to your JSON metadata
+image_root = "/Users/joshuayeh/dataset_project/VISTA/data/processed/TC01_object_localization/TC01_01/"  # Root folder containing the 'images/' folder
 
 # Fields to edit
 fields = [

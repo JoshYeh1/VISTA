@@ -3,24 +3,73 @@
 # and number of key frames
 import json, csv, wave, argparse, pathlib, cv2, numpy as np
 from projectaria_tools.core import data_provider
+from pathlib import Path
 
 # -------------------- CLI --------------------
 parser = argparse.ArgumentParser()
-parser.add_argument("--vrs", default="/Users/joshuayeh/dataset_project/VISTA/data/raw/20250618_objectloc_office.vrs")
-parser.add_argument("--output", default="/Users/joshuayeh/dataset_project/VISTA/data/dataset/TC01_object_localization/TC01_00/")
-parser.add_argument("--test_case_id", default="TC01_00")
-parser.add_argument("--test_type", default="Object Location")
-parser.add_argument("--key_frames", type=int, default=5,
-                    help="How many RGB frames to annotate")
+parser.add_argument("--key_frames", type=int, default=5, help="How many RGB frames to annotate")
 args = parser.parse_args()
-out_path = pathlib.Path(args.output)
-images_folder = out_path / "images"
-annotations_folder = out_path
-images_folder.mkdir(parents=True, exist_ok=True)
+
+out_path = Path("/Users/joshuayeh/dataset_project/VISTA/data/processed/")
+
+# ------------ Inputs ------------
+raw_file_name = input(f"Input file name (include .vrs): ")
+raw_file_path = Path("/Users/joshuayeh/dataset_project/VISTA/data/raw") / raw_file_name
+
+case_num = int(input("Input Case number (1-10): "))
+specific_number = (input("Input Case Count (00...09 Format): "))
+
+if case_num == 1:
+    test_case_id= "TC01_" + specific_number
+    annotations_folder = out_path / f"TC01_object_localization/{test_case_id}"
+    test_type = "Object Localization"
+if case_num == 2:
+    test_case_id = "TC02_" + specific_number
+    annotations_folder = out_path / f"TC02_hzd_detection/{test_case_id}"
+    test_type = "Hazard Detection"
+if case_num == 3:
+    test_case_id = "TC03_" + specific_number
+    annotations_folder = out_path / f"TC03_scene_description/{test_case_id}"
+    test_type = "Scene Description"
+if case_num == 4:
+    test_case_id = "TC04_" + specific_number
+    annotations_folder = out_path / f"TC04_navigation/{test_case_id}"
+    test_type = "Navigation"
+if case_num == 5:
+    test_case_id = "TC05_" + specific_number
+    annotations_folder = out_path / f"TC05_social_cues/{test_case_id}"
+    test_type = "Social Cues"
+if case_num == 6:
+    test_case_id = "TC06_" + specific_number
+    annotations_folder = out_path / f"TC06_distance_est/{test_case_id}"
+    test_type = "Distance Estimation"
+if case_num == 7:
+    test_case_id = "TC07_" + specific_number
+    annotations_folder = out_path / f"TC07_task_instruction/{test_case_id}"
+    test_type = "Task Instruction"
+if case_num == 8:
+    test_case_id = "TC08_" + specific_number
+    annotations_folder = out_path / f"TC08_object_query/{test_case_id}"
+    test_type = "Object Query"
+if case_num == 9:
+    test_case_id = "TC09_" + specific_number
+    annotations_folder = out_path / f"TC09_txt_understanding/{test_case_id}"
+    test_type = "Text Understanding"
+if case_num == 10:
+    test_case_id = "TC10_" + specific_number
+    annotations_folder = out_path / f"TC10_motion_understanding/{test_case_id}"
+    test_type = "Motion Understanding"
+else:
+    print(f"Invalid Case Number")
+    exit
+
 annotations_folder.mkdir(exist_ok=True)
+images_folder = annotations_folder / "images"
+images_folder.mkdir(parents=True, exist_ok=True)
+
 
 # ----------------- Open provider -------------
-provider = data_provider.create_vrs_data_provider(args.vrs)
+provider = data_provider.create_vrs_data_provider(str(raw_file_path))
 if provider is None:
     raise RuntimeError("Invalid VRS file")
 
@@ -79,12 +128,12 @@ indices    = np.linspace(0, n_images-1, args.key_frames, dtype=int)
 
 # common meta, shortened here for clarity
 meta = {
-    "id": f"{args.test_case_id}",
+    "id": f"{test_case_id}",
     "dataset_version": 1.0,
     "collection_date": None,
     "fps": 10,
     "camera_resolution": [1408, 1408],
-    "test_case": args.test_type,
+    "test_case": test_type,
     "setup_description": None,
     "user_query": None,
     "descriptive_ground_truth": None,
@@ -139,4 +188,3 @@ with open(annotations_folder / "annotations.json", "w") as f:
     json.dump({"annotations": annotations}, f, indent=2)
 
 print("Done")
-

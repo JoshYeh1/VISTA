@@ -6,7 +6,7 @@ from projectaria_tools.core.stream_id import RecordableTypeId, StreamId
 # -------------------- CLI --------------------
 parser = argparse.ArgumentParser()
 parser.add_argument("--vrs", default="/Users/joshuayeh/dataset_project/VISTA/data/raw/20250618_objectloc_office.vrs")
-parser.add_argument("--output", default="/Users/joshuayeh/dataset_project/VISTA/data/dataset/TC01_object_localization/TC01_00/")
+parser.add_argument("--output", default="/Users/joshuayeh/dataset_project/VISTA/data/processed/TC01_object_localization/TC01_00/")
 parser.add_argument("--test_case_id", default="TC01_00")
 parser.add_argument("--test_type", default="Object Location")
 parser.add_argument("--key_frames", type=int, default=5,

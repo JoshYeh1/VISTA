@@ -1,5 +1,5 @@
 #Code taken from projectaria_tools github Google colab
-
+#displays file and information on matlab graph
 import sys
 import os 
 
