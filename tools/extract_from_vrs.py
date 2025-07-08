@@ -12,10 +12,15 @@ args = parser.parse_args()
 
 out_path = Path("/Users/joshuayeh/dataset_project/VISTA/data/processed/")
 
-# ------------ Inputs ------------
+
+# ----------------- Open provider -------------
 raw_file_name = input(f"Input file name (include .vrs): ")
 raw_file_path = Path("/Users/joshuayeh/dataset_project/VISTA/data/raw") / raw_file_name
+provider = data_provider.create_vrs_data_provider(str(raw_file_path))
+if provider is None:
+    raise RuntimeError("Invalid VRS file")
 
+# ------------ Inputs ------------
 case_num = int(input("Input Case number (1-10): "))
 specific_number = (input("Input Case Count (00...09 Format): "))
 
@@ -59,7 +64,7 @@ if case_num == 10:
     test_case_id = "TC10_" + specific_number
     annotations_folder = out_path / f"TC10_motion_understanding/{test_case_id}"
     test_type = "Motion Understanding"
-else:
+if case_num > 10:
     print(f"Invalid Case Number")
     exit
 
@@ -68,10 +73,7 @@ images_folder = annotations_folder / "images"
 images_folder.mkdir(parents=True, exist_ok=True)
 
 
-# ----------------- Open provider -------------
-provider = data_provider.create_vrs_data_provider(str(raw_file_path))
-if provider is None:
-    raise RuntimeError("Invalid VRS file")
+
 
 # ------------ AUDIO to WAV -------------------
 mic_sid = provider.get_stream_id_from_label("mic")

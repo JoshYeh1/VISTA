@@ -1,0 +1,174 @@
+{
+  "annotations": [
+    {
+      "scene_image": "images/TC05_15_0000.jpg",
+      "timestamp_ns": 2921419853862,
+      "imu_row": 63,
+      "audio_file": "TC05_social_cues/TC05_15/audio.wav",
+      "id": "TC05_15",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Social Cues",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC05_15_0027.jpg",
+      "timestamp_ns": 2924119853562,
+      "imu_row": 2245,
+      "audio_file": "TC05_social_cues/TC05_15/audio.wav",
+      "id": "TC05_15",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Social Cues",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC05_15_0055.jpg",
+      "timestamp_ns": 2926919851775,
+      "imu_row": 4508,
+      "audio_file": "TC05_social_cues/TC05_15/audio.wav",
+      "id": "TC05_15",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Social Cues",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC05_15_0082.jpg",
+      "timestamp_ns": 2929619857237,
+      "imu_row": 6690,
+      "audio_file": "TC05_social_cues/TC05_15/audio.wav",
+      "id": "TC05_15",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Social Cues",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC05_15_0110.jpg",
+      "timestamp_ns": 2932419860525,
+      "imu_row": 8953,
+      "audio_file": "TC05_social_cues/TC05_15/audio.wav",
+      "id": "TC05_15",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Social Cues",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    }
+  ]
+}

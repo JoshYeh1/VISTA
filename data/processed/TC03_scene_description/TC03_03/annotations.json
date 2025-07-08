@@ -1,0 +1,174 @@
+{
+  "annotations": [
+    {
+      "scene_image": "images/TC03_03_0000.jpg",
+      "timestamp_ns": 18794399118800,
+      "imu_row": 67,
+      "audio_file": "TC03_scene_description/TC03_03/audio.wav",
+      "id": "TC03_03",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Scene Description",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC03_03_0028.jpg",
+      "timestamp_ns": 18797199121975,
+      "imu_row": 2331,
+      "audio_file": "TC03_scene_description/TC03_03/audio.wav",
+      "id": "TC03_03",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Scene Description",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC03_03_0056.jpg",
+      "timestamp_ns": 18799999123675,
+      "imu_row": 4594,
+      "audio_file": "TC03_scene_description/TC03_03/audio.wav",
+      "id": "TC03_03",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Scene Description",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC03_03_0084.jpg",
+      "timestamp_ns": 18802799115387,
+      "imu_row": 6857,
+      "audio_file": "TC03_scene_description/TC03_03/audio.wav",
+      "id": "TC03_03",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Scene Description",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC03_03_0112.jpg",
+      "timestamp_ns": 18805599122012,
+      "imu_row": 9120,
+      "audio_file": "TC03_scene_description/TC03_03/audio.wav",
+      "id": "TC03_03",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Scene Description",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    }
+  ]
+}

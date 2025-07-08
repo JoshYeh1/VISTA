@@ -1,0 +1,174 @@
+{
+  "annotations": [
+    {
+      "scene_image": "images/TC01_10_0000.jpg",
+      "timestamp_ns": 2008401551887,
+      "imu_row": 64,
+      "audio_file": "TC01_object_localization/TC01_10/audio.wav",
+      "id": "TC01_10",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Object Localization",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC01_10_0028.jpg",
+      "timestamp_ns": 2011201554312,
+      "imu_row": 2327,
+      "audio_file": "TC01_object_localization/TC01_10/audio.wav",
+      "id": "TC01_10",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Object Localization",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC01_10_0056.jpg",
+      "timestamp_ns": 2014001552512,
+      "imu_row": 4589,
+      "audio_file": "TC01_object_localization/TC01_10/audio.wav",
+      "id": "TC01_10",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Object Localization",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC01_10_0084.jpg",
+      "timestamp_ns": 2016801554437,
+      "imu_row": 6852,
+      "audio_file": "TC01_object_localization/TC01_10/audio.wav",
+      "id": "TC01_10",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Object Localization",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    },
+    {
+      "scene_image": "images/TC01_10_0112.jpg",
+      "timestamp_ns": 2019601548937,
+      "imu_row": 9115,
+      "audio_file": "TC01_object_localization/TC01_10/audio.wav",
+      "id": "TC01_10",
+      "dataset_version": 1.0,
+      "collection_date": null,
+      "fps": 10,
+      "camera_resolution": [
+        1408,
+        1408
+      ],
+      "test_case": "Object Localization",
+      "setup_description": null,
+      "user_query": null,
+      "descriptive_ground_truth": null,
+      "action_ground_truth": null,
+      "task_type": null,
+      "environment": null,
+      "lighting": null,
+      "distance_to_target": null,
+      "model_description_output": null,
+      "model_action_output": null,
+      "description_score": null,
+      "action_score": null,
+      "evaluation_method": null,
+      "measurable_result": "location accuracy and spatial reference",
+      "human_score": {
+        "description_accuracy": null,
+        "action_usefulness": null,
+        "confidence": null
+      }
+    }
+  ]
+}
