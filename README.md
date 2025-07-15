@@ -11,8 +11,7 @@ This guide explains, in simple steps, how to turn your Project Aria `.vrs` files
 
 - **Python 3.7+**
 - **FFmpeg** (for video/audio processing)
-- **VISTA repository** (already cloned)
-- **Extracted VRS data** (using the provided extraction tool)
+- **Extracted VRS data** 
 
 ### Step-by-Step Instructions
 
