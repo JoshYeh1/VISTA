@@ -1,9 +1,6 @@
 # VISTA
 Visually Impaired Scene & Task Assessment
 
-# VISTA
-Visually Impaired Scene & Task Assessment
-
 ---
 
 ## How to Convert Project Aria VRS Files to 10-Second MP4 Videos with Audio
