@@ -1,3 +1,6 @@
+# This program records a 10 second clip on the Aria glasses
+# (Not really needed now because of phone app)
+#
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

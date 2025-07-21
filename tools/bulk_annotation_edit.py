@@ -1,3 +1,6 @@
+#This program will annotate all keyframes. This is best used for data recordings that are static or when motion detection is
+#not a testable parameter
+
 import json
 from pathlib import Path
 

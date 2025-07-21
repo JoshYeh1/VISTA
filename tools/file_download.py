@@ -1,3 +1,5 @@
+#prgram that downloads raw .vrs files to computer
+#change destination_folder and vrs_files as needed
 import os
 
 destination_folder = "/Users/joshuayeh/raw_data"
