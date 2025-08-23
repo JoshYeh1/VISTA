@@ -6,7 +6,7 @@ from pathlib import Path
 
 out_path = Path("/Users/joshuayeh/dataset_project/VISTA/data/processed/")
 case_num = int(input("Input Test Case number (1-10): "))
-specific_number = input("Input Id number (00-99): ")
+specific_number = input("Input Id number (000-999): ")
 
 if case_num == 1:
     test_case_id= "TC01_" + specific_number

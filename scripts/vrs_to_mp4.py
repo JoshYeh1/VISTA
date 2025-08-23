@@ -1,11 +1,11 @@
-#This program takes all the vrs files in one folder and converts them into mp4 files
-
+# This program takes all the vrs files in one folder and converts them into mp4 files
+# Note: Make sure you change file location folders
 import os
 from pathlib import Path
 from projectaria_tools.utils.vrs_to_mp4_utils import convert_vrs_to_mp4
 
-input_folder = Path("/Users/joshuayeh/dataset_project/data/new_raw") #folder with vrs files
-output_folder = Path("/Users/joshuayeh/dataset_project/hugging_face/VISTA/raw") #folder for mp4 videos
+input_folder = Path("/Users/joshuayeh/dataset_project/hugging_face/VISTA/new_raw") #folder with vrs files
+output_folder = Path("/Users/joshuayeh/dataset_project/hugging_face/VISTA/mp4") #folder for mp4 videos
 log_folder = Path("/Users/joshuayeh/dataset_project/hugging_face/VISTA/logs")#folder for timestamp logs
 down_sample_factor = 1
 output_folder.mkdir(parents=True, exist_ok=True)
