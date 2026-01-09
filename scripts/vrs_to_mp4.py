@@ -4,9 +4,9 @@ import os
 from pathlib import Path
 from projectaria_tools.utils.vrs_to_mp4_utils import convert_vrs_to_mp4
 
-input_folder = Path("/Users/joshuayeh/dataset_project/hugging_face/VISTA/new_raw") #folder with vrs files
-output_folder = Path("/Users/joshuayeh/dataset_project/hugging_face/VISTA/mp4") #folder for mp4 videos
-log_folder = Path("/Users/joshuayeh/dataset_project/hugging_face/VISTA/logs")#folder for timestamp logs
+input_folder = Path("/Volumes/T7 Shield/vista_data/part12") #folder with vrs files
+output_folder = Path("/Volumes/T7 Shield/Video/part12") #folder for mp4 videos
+log_folder = Path("/Volumes/T7 Shield/Video")#folder for timestamp logs
 down_sample_factor = 1
 output_folder.mkdir(parents=True, exist_ok=True)
 log_folder.mkdir(parents=True, exist_ok=True)
