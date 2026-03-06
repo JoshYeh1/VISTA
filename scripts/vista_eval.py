@@ -4,143 +4,151 @@ import cv2
 import torch
 import numpy as np
 import pandas as pd
+import argparse
+import base64
+import io
 import time
-from collections import Counter
+from PIL import Image
 from tqdm import tqdm
+from collections import Counter
 from bert_score import score as bert_score_batch
-from transformers import AutoProcessor, LlavaForConditionalGeneration
 
 ############################################
-# CONFIGURATION
+# CONFIG
 ############################################
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--model", default="llava")
+args = parser.parse_args()
+
+MODEL_TYPE = args.model.lower()
 
 DATASET_ROOT = "vista_dataset"
-OUTPUT_FILE = "vista_results.csv"
+OUTPUT_FILE = f"vista_results_{MODEL_TYPE}.csv"
 ERROR_FILE = OUTPUT_FILE.replace(".csv", "_errors.csv")
 
 NUM_FRAMES = 8
+KEYFRAMES = 3
 SEED = 42
 
-MODEL_NAME = "llava-hf/llava-1.5-7b-hf"
-
-MAX_RETRIES = 2
+GPT4O_MAX_RETRIES = 3
+GPT4O_RETRY_DELAY = 5  # seconds between retries (doubles each attempt)
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-############################################
-# REPRODUCIBILITY
-############################################
 
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 
 ############################################
-# LOAD MODEL
+# MODEL LOADING
 ############################################
 
-print("Loading VLM model...")
+if MODEL_TYPE == "llava":
 
-processor = AutoProcessor.from_pretrained(MODEL_NAME)
+    from transformers import AutoProcessor, LlavaForConditionalGeneration
 
-model = LlavaForConditionalGeneration.from_pretrained(
-    MODEL_NAME,
-    torch_dtype=torch.float16 if DEVICE == "cuda" else torch.float32,
-    device_map="auto",
-    attn_implementation="eager",
-)
+    MODEL_NAME = "llava-hf/llava-1.5-7b-hf"
 
-model.eval()
+    processor = AutoProcessor.from_pretrained(MODEL_NAME)
+
+    model = LlavaForConditionalGeneration.from_pretrained(
+        MODEL_NAME,
+        torch_dtype=torch.float16 if DEVICE == "cuda" else torch.float32,
+        device_map="auto",
+    )
+
+    model.eval()
+
+elif MODEL_TYPE == "blip":
+
+    from transformers import Blip2Processor, Blip2ForConditionalGeneration
+
+    MODEL_NAME = "Salesforce/blip2-flan-t5-xl"
+
+    processor = Blip2Processor.from_pretrained(MODEL_NAME)
+
+    model = Blip2ForConditionalGeneration.from_pretrained(
+        MODEL_NAME,
+        torch_dtype=torch.float16,
+        device_map="auto"
+    )
+
+    model.eval()
+
+elif MODEL_TYPE == "qwen":
+
+    from transformers import AutoProcessor, AutoModelForVision2Seq
+
+    MODEL_NAME = "Qwen/Qwen2-VL-7B-Instruct"
+
+    processor = AutoProcessor.from_pretrained(MODEL_NAME)
+
+    model = AutoModelForVision2Seq.from_pretrained(
+        MODEL_NAME,
+        torch_dtype=torch.float16,
+        device_map="auto"
+    )
+
+    model.eval()
+
+elif MODEL_TYPE == "gpt4o":
+
+    from openai import OpenAI, RateLimitError, APIError
+    client = OpenAI()
+
+else:
+    raise ValueError(
+        f"Unknown model type: '{MODEL_TYPE}'. Choose from: llava, blip, qwen, gpt4o"
+    )
 
 ############################################
 # FRAME EXTRACTION
 ############################################
 
-def extract_frames(video_path, num_frames=NUM_FRAMES):
+def extract_frames(video_path):
 
     cap = cv2.VideoCapture(video_path)
 
-    try:
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    if total == 0:
+        cap.release()
+        raise ValueError(f"Video has 0 frames: {video_path}")
 
-        if total == 0:
-            raise ValueError(f"Video has 0 frames: {video_path}")
+    indices = np.linspace(0, total - 1, NUM_FRAMES, dtype=int)
 
-        indices = np.linspace(
-            0,
-            total - 1,
-            num=min(num_frames, total),
-            dtype=int
-        )
+    frames = []
 
-        frames = []
+    for idx in indices:
 
-        for idx in indices:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, int(idx))
 
-            cap.set(cv2.CAP_PROP_POS_FRAMES, int(idx))
+        ret, frame = cap.read()
 
-            ret, frame = cap.read()
+        if ret:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frames.append(frame)
 
-            if ret:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                frames.append(frame)
+    cap.release()
 
-        if not frames:
-            raise ValueError(f"No frames read from: {video_path}")
+    if not frames:
+        raise ValueError(f"No frames extracted from: {video_path}")
 
+    return frames
+
+
+def select_keyframes(frames):
+    """Return KEYFRAMES evenly-spaced frames from the full frame list."""
+
+    if len(frames) <= KEYFRAMES:
         return frames
 
-    finally:
-        cap.release()
+    idx = np.linspace(0, len(frames) - 1, KEYFRAMES, dtype=int)
+
+    return [frames[i] for i in idx]
 
 ############################################
-# CHECK JSON VALIDITY
-############################################
-
-def json_has_annotation(json_path):
-
-    try:
-
-        with open(json_path) as f:
-            data = json.load(f)
-
-        if not data:
-            return False
-
-        if "annotations" not in data:
-            return False
-
-        if len(data["annotations"]) == 0:
-            return False
-
-        if "video_level" not in data["annotations"][0]:
-            return False
-
-        ann = data["annotations"][0]["video_level"]
-
-        if not ann.get("question") or not ann.get("answer"):
-            return False
-
-        return True
-
-    except Exception:  # FIX: bare except replaced with except Exception
-        return False
-
-############################################
-# LOAD ANNOTATION
-############################################
-
-def load_annotation(json_path):
-
-    with open(json_path) as f:
-        data = json.load(f)
-
-    ann = data["annotations"][0]["video_level"]
-
-    return ann["question"], ann["answer"]
-
-############################################
-# TOKEN F1 METRIC
+# TOKEN F1
 ############################################
 
 def token_f1(pred, gt):
@@ -148,10 +156,12 @@ def token_f1(pred, gt):
     pred_tokens = pred.lower().split()
     gt_tokens = gt.lower().split()
 
+    if not pred_tokens or not gt_tokens:
+        return 0.0
+
     pred_counts = Counter(pred_tokens)
     gt_counts = Counter(gt_tokens)
 
-    # Intersection takes minimum count per token, preserving duplicates
     common = sum((pred_counts & gt_counts).values())
 
     if common == 0:
@@ -163,115 +173,233 @@ def token_f1(pred, gt):
     return 2 * precision * recall / (precision + recall)
 
 ############################################
-# RUN VLM
+# PROMPTS — NO GROUND TRUTH LEAKAGE
 ############################################
 
-def run_vlm(frames, question):
+def build_scene_prompt():
     """
-    Use the middle frame as the representative frame for LLaVA-1.5,
-    which only supports single-image input.
+    Blind scene prompt. No scene_description passed in — the model
+    must describe the environment from visual input alone.
     """
-
-    representative_frame = frames[len(frames) // 2]
-
-    prompt = f"USER: <image>\n{question}\nASSISTANT:"
-
-    inputs = processor(
-        text=prompt,
-        images=representative_frame,
-        return_tensors="pt"
+    return (
+        "You are assisting a visually impaired person. "
+        "Describe the key objects, obstacles, layout, and any hazards "
+        "visible in this environment based solely on what you observe."
     )
 
-    inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
-    with torch.no_grad():
-
-        output = model.generate(
-            **inputs,
-            max_new_tokens=64,
-            do_sample=False
-        )
-
-    full_text = processor.decode(output[0], skip_special_tokens=True)
-
-    if "ASSISTANT:" in full_text:
-        response = full_text.split("ASSISTANT:")[-1].strip()
-    else:
-        response = full_text.strip()
-
-    return response
+def build_guidance_prompt():
+    """
+    Blind guidance prompt. No action instructions passed in — the model
+    must infer the task and provide guidance from visual input alone.
+    """
+    return (
+        "You are assisting a visually impaired person. "
+        "Based on what you observe in these images, provide clear "
+        "step-by-step guidance to help them safely navigate or interact "
+        "with this environment. Highlight any hazards or important landmarks."
+    )
 
 ############################################
-# FIND ALL CLIPS
+# GPT-4O WITH EXPONENTIAL BACKOFF RETRY
 ############################################
 
-def find_all_clips(dataset_root):
+def call_gpt4o(img_b64, prompt):
+    """Call GPT-4o with retry on rate limit or transient API errors."""
 
-    # FIX: restore missing existence check from v1
-    if not os.path.isdir(dataset_root):
-        raise FileNotFoundError(f"Dataset root not found: {dataset_root}")
+    from openai import RateLimitError, APIError
+
+    for attempt in range(GPT4O_MAX_RETRIES):
+
+        try:
+
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{img_b64}"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens=256
+            )
+
+            return response.choices[0].message.content
+
+        except (RateLimitError, APIError) as e:
+
+            if attempt < GPT4O_MAX_RETRIES - 1:
+                wait = GPT4O_RETRY_DELAY * (2 ** attempt)
+                print(f"[GPT-4o] {type(e).__name__} — retrying in {wait}s "
+                      f"(attempt {attempt + 1}/{GPT4O_MAX_RETRIES})")
+                time.sleep(wait)
+            else:
+                raise
+
+############################################
+# MODEL ROUTER — MULTI-FRAME
+############################################
+
+def run_model(frames, prompt):
+    """
+    Run inference using the selected model across multiple keyframes.
+    Local models (LLaVA, Qwen) receive all KEYFRAMES via multiple <image>
+    tokens with single-frame fallback if batched input fails.
+    BLIP2 and GPT-4o are single-image by design.
+    """
+
+    keyframes = select_keyframes(frames)
+
+    if MODEL_TYPE == "llava":
+
+        image_tokens = "\n".join(["<image>"] * len(keyframes))
+        full_prompt = f"USER: {image_tokens}\n{prompt}\nASSISTANT:"
+
+        try:
+            inputs = processor(
+                text=full_prompt,
+                images=keyframes,
+                return_tensors="pt",
+                padding=True
+            ).to(model.device)
+
+            with torch.no_grad():
+                out = model.generate(**inputs, max_new_tokens=128, do_sample=False)
+
+            text = processor.decode(out[0], skip_special_tokens=True)
+
+        except Exception as e:
+            print(f"[LLaVA] Multi-frame failed ({e}), falling back to single frame.")
+            image = keyframes[len(keyframes) // 2]
+            full_prompt = f"USER: <image>\n{prompt}\nASSISTANT:"
+
+            inputs = processor(
+                text=full_prompt,
+                images=image,
+                return_tensors="pt"
+            ).to(model.device)
+
+            with torch.no_grad():
+                out = model.generate(**inputs, max_new_tokens=128, do_sample=False)
+
+            text = processor.decode(out[0], skip_special_tokens=True)
+
+        return text.split("ASSISTANT:")[-1].strip() if "ASSISTANT:" in text else text.strip()
+
+    elif MODEL_TYPE == "blip":
+
+        # BLIP2 is inherently single-image; use middle keyframe
+        image = keyframes[len(keyframes) // 2]
+
+        inputs = processor(
+            images=image,
+            text=prompt,
+            return_tensors="pt"
+        ).to(model.device)
+
+        with torch.no_grad():
+            out = model.generate(**inputs, max_new_tokens=128)
+
+        return processor.decode(out[0], skip_special_tokens=True)
+
+    elif MODEL_TYPE == "qwen":
+
+        image_tokens = "".join(["<image>"] * len(keyframes))
+        full_prompt = f"{image_tokens}\n{prompt}"
+
+        try:
+            inputs = processor(
+                text=full_prompt,
+                images=keyframes,
+                return_tensors="pt",
+                padding=True
+            ).to(model.device)
+
+            with torch.no_grad():
+                out = model.generate(**inputs, max_new_tokens=128, do_sample=False)
+
+            return processor.decode(out[0], skip_special_tokens=True)
+
+        except Exception as e:
+            print(f"[Qwen] Multi-frame failed ({e}), falling back to single frame.")
+            image = keyframes[len(keyframes) // 2]
+            full_prompt = f"<image>\n{prompt}"
+
+            inputs = processor(
+                text=full_prompt,
+                images=image,
+                return_tensors="pt"
+            ).to(model.device)
+
+            with torch.no_grad():
+                out = model.generate(**inputs, max_new_tokens=128, do_sample=False)
+
+            return processor.decode(out[0], skip_special_tokens=True)
+
+    elif MODEL_TYPE == "gpt4o":
+
+        # Single middle frame for GPT-4o (API cost constraint)
+        image = keyframes[len(keyframes) // 2]
+
+        img_pil = Image.fromarray(image)
+        buffer = io.BytesIO()
+        img_pil.save(buffer, format="PNG")
+        img_b64 = base64.b64encode(buffer.getvalue()).decode()
+
+        return call_gpt4o(img_b64, prompt)
+
+############################################
+# FIND CLIPS
+############################################
+
+def find_clips():
+
+    if not os.path.isdir(DATASET_ROOT):
+        raise FileNotFoundError(f"Dataset root not found: {DATASET_ROOT}")
 
     clips = []
 
-    for tc_folder in sorted(os.listdir(dataset_root)):
+    for tc in sorted(os.listdir(DATASET_ROOT)):
 
-        tc_path = os.path.join(dataset_root, tc_folder)
+        tc_path = os.path.join(DATASET_ROOT, tc)
 
         if not os.path.isdir(tc_path):
             continue
 
-        for clip_folder in sorted(os.listdir(tc_path)):
+        for clip in sorted(os.listdir(tc_path)):
 
-            clip_path = os.path.join(tc_path, clip_folder)
+            clip_path = os.path.join(tc_path, clip)
 
             if not os.path.isdir(clip_path):
                 continue
 
-            video_file = None
+            video = None
             json_file = None
 
-            for file in os.listdir(clip_path):
+            for f in os.listdir(clip_path):
 
-                if file.endswith(".mp4"):
-                    video_file = os.path.join(clip_path, file)
+                if f.endswith(".mp4"):
+                    video = os.path.join(clip_path, f)
 
-                if file.endswith(".json"):
-                    json_file = os.path.join(clip_path, file)
+                if f.endswith(".json") and not f.startswith("._"):
+                    json_file = os.path.join(clip_path, f)
 
-            if video_file and json_file:
-
+            if video and json_file:
                 clips.append({
-                    "clip_id": clip_folder,
-                    "video": video_file,
-                    "json": json_file
+                    "clip_id": clip,
+                    "video":   video,
+                    "json":    json_file
                 })
 
-            else:
-
-                missing = []
-                if not video_file:
-                    missing.append("video (.mp4)")
-                if not json_file:
-                    missing.append("annotation (.json)")
-                print(f"[WARN] Skipping {clip_folder}: missing {', '.join(missing)}")
-
     return clips
-
-############################################
-# RESUME: LOAD ALREADY-PROCESSED CLIP IDS
-############################################
-
-def load_processed_ids(output_file):
-    """Return set of clip_ids already written to the output CSV."""
-
-    if not os.path.exists(output_file):
-        return set()
-
-    try:
-        df = pd.read_csv(output_file)
-        return set(df["clip_id"].astype(str).tolist())
-    except Exception:
-        return set()
 
 ############################################
 # MAIN EVALUATION
@@ -279,182 +407,129 @@ def load_processed_ids(output_file):
 
 def evaluate():
 
-    clips = find_all_clips(DATASET_ROOT)
+    clips = find_clips()
+    print(f"Model             : {MODEL_TYPE}")
+    print(f"Total clips found : {len(clips)}")
 
-    print(f"Total clips found: {len(clips)}")
+    # Build prompts once — identical blind prompt used for every clip
+    scene_prompt    = build_scene_prompt()
+    guidance_prompt = build_guidance_prompt()
 
-    # FIX: checkpoint/final-save conflict resolved by:
-    #   - appending per-clip results to CSV as we go (crash-safe)
-    #   - reading back the full CSV at the end for BERTScore + summary
-    #   - BERTScore written to a separate summary file, not overwriting the main CSV
-    #   - supporting resume: skip clips already in the output file
-
-    processed_ids = load_processed_ids(OUTPUT_FILE)
-
-    if processed_ids:
-        print(f"Resuming: {len(processed_ids)} clips already processed, skipping.")
-
-    skipped_empty = 0
-    errors = []
-    newly_processed = []
-
-    write_header = not os.path.exists(OUTPUT_FILE)
+    results = []
+    errors  = []
+    skipped = 0
 
     for clip in tqdm(clips):
 
-        # Skip already-processed clips (resume support)
-        if clip["clip_id"] in processed_ids:
-            continue
-
         try:
 
-            if not json_has_annotation(clip["json"]):
-                skipped_empty += 1
+            with open(clip["json"]) as f:
+                data = json.load(f)
+
+            if not data.get("annotations"):
+                skipped += 1
                 continue
 
-            question, gt = load_annotation(clip["json"])
+            ann = data["annotations"][0].get("video_level", {})
+
+            if not ann or not ann.get("question") or not ann.get("answer"):
+                skipped += 1
+                continue
+
+            question    = ann.get("question", "")
+            answer      = ann.get("answer", "")
+            scene_gt    = ann.get("scene_description", "")
+            actions     = ann.get("actions", [])
+            guidance_gt = " ".join(a["instruction"] for a in actions)
 
             frames = extract_frames(clip["video"])
 
-            ####################################
-            # RETRY LOGIC
-            ####################################
+            scene_pred    = run_model(frames, scene_prompt)
+            qa_pred       = run_model(frames, question)
+            guidance_pred = run_model(frames, guidance_prompt)
 
-            pred = None
-            latency = None
-
-            for attempt in range(MAX_RETRIES):
-
-                try:
-
-                    start = time.time()
-                    pred = run_vlm(frames, question)
-                    latency = time.time() - start
-                    break
-
-                except RuntimeError as e:
-
-                    print(f"[Retry {attempt+1}] {clip['clip_id']} : {e}")
-
-                    if "CUDA" in str(e):
-                        torch.cuda.empty_cache()
-
-                    if attempt == MAX_RETRIES - 1:
-                        raise
-
-            # FIX: guard against pred/latency being None if retries somehow
-            # exhaust without raising (defensive; raise above should prevent this)
-            if pred is None or latency is None:
-                raise RuntimeError("Inference did not produce a result after retries.")
-
-            ####################################
-            # METRICS
-            ####################################
-
-            exact_match = int(pred.strip().lower() == gt.strip().lower())
-
-            f1 = token_f1(pred, gt)
-
-            result = {
-                "clip_id": clip["clip_id"],
-                "question": question,
-                "ground_truth": gt,
-                "prediction": pred,
-                "exact_match": exact_match,
-                "token_f1": round(f1, 4),
-                "latency_sec": round(latency, 3),
-            }
-
-            ####################################
-            # APPEND TO CSV (crash-safe checkpoint)
-            ####################################
-
-            pd.DataFrame([result]).to_csv(
-                OUTPUT_FILE,
-                mode="a",
-                header=write_header,
-                index=False,
-            )
-            write_header = False  # only write header once
-
-            newly_processed.append(result)
+            results.append({
+                "clip_id":       clip["clip_id"],
+                "scene_gt":      scene_gt,
+                "scene_pred":    scene_pred,
+                "qa_gt":         answer,
+                "qa_pred":       qa_pred,
+                "qa_exact":      int(qa_pred.strip().lower() == answer.strip().lower()),
+                "qa_f1":         token_f1(qa_pred, answer),
+                "guidance_gt":   guidance_gt,
+                "guidance_pred": guidance_pred,
+            })
 
         except Exception as e:
 
-            errors.append({
-                "clip_id": clip["clip_id"],
-                "error": str(e)
-            })
-
+            errors.append({"clip_id": clip["clip_id"], "error": str(e)})
             print(f"[ERROR] {clip['clip_id']}: {e}")
 
     ############################################
-    # READ BACK FULL CSV FOR BERTSCORE + SUMMARY
+    # EMPTY GUARD
     ############################################
 
-    if not os.path.exists(OUTPUT_FILE):
-        print("No results generated.")
+    if not results:
+        print("No results generated. Check dataset path and annotations.")
+        if errors:
+            pd.DataFrame(errors).to_csv(ERROR_FILE, index=False)
+            print(f"Saved {len(errors)} errors to {ERROR_FILE}")
         return
 
-    df = pd.read_csv(OUTPUT_FILE)
+    df = pd.DataFrame(results)
 
-    if df.empty:
-        print("No results generated.")
-        return
-
-    print(f"\nTotal results in file: {len(df)}")
+    ############################################
+    # BERTSCORE — .tolist() for clean serialization
+    ############################################
 
     print("Computing BERTScore...")
 
-    predictions = df["prediction"].tolist()
-    ground_truths = df["ground_truth"].tolist()
-
-    _, _, F1 = bert_score_batch(
-        predictions,
-        ground_truths,
+    _, _, scene_f1 = bert_score_batch(
+        df["scene_pred"].tolist(),
+        df["scene_gt"].tolist(),
         lang="en",
-        device=DEVICE,   # FIX: was hardcoded "cuda", now respects CPU fallback
-        verbose=False,
+        device=DEVICE
     )
 
-    df["bert_score_f1"] = [round(f, 4) for f in F1.tolist()]
+    _, _, guidance_f1 = bert_score_batch(
+        df["guidance_pred"].tolist(),
+        df["guidance_gt"].tolist(),
+        lang="en",
+        device=DEVICE
+    )
 
-    # FIX: write enriched results (with BERTScore) back to main CSV cleanly
+    df["scene_bert"]    = scene_f1.tolist()
+    df["guidance_bert"] = guidance_f1.tolist()
+
+    ############################################
+    # SAVE
+    ############################################
+
     df.to_csv(OUTPUT_FILE, index=False)
-
-    ############################################
-    # PRINT SUMMARY
-    ############################################
-
-    print(f"Saved {len(df)} results to {OUTPUT_FILE}")
-    print(f"Mean BERTScore F1 : {df['bert_score_f1'].mean():.4f}")
-    print(f"Exact Match       : {df['exact_match'].mean():.4f}")
-    print(f"Token F1          : {df['token_f1'].mean():.4f}")
-    print(f"Average latency   : {df['latency_sec'].mean():.3f} sec")
-    print(f"Skipped (no ann.) : {skipped_empty}")
-    print(f"Errors this run   : {len(errors)}")
-
-    ############################################
-    # SAVE ERRORS
-    ############################################
+    print(f"Results saved to {OUTPUT_FILE}")
 
     if errors:
+        pd.DataFrame(errors).to_csv(ERROR_FILE, index=False)
+        print(f"Errors saved to {ERROR_FILE}")
 
-        # Append errors so previous runs aren't lost
-        error_df = pd.DataFrame(errors)
-        error_df.to_csv(
-            ERROR_FILE,
-            mode="a",
-            header=not os.path.exists(ERROR_FILE),
-            index=False,
-        )
+    ############################################
+    # SUMMARY
+    ############################################
 
-        print(f"Saved {len(errors)} errors to {ERROR_FILE}")
+    print("\n========== Benchmark Results ==========")
+    print(f"Model                  : {MODEL_TYPE}")
+    print("----------------------------------------")
+    print(f"Total clips evaluated  : {len(df)}")
+    print(f"Skipped (no annotation): {skipped}")
+    print(f"Errors                 : {len(errors)}")
+    print("----------------------------------------")
+    print(f"Scene BERTScore        : {df['scene_bert'].mean():.4f}")
+    print(f"QA Exact Match         : {df['qa_exact'].mean():.4f}")
+    print(f"QA Token F1            : {df['qa_f1'].mean():.4f}")
+    print(f"Guidance BERTScore     : {df['guidance_bert'].mean():.4f}")
+    print("========================================")
 
-############################################
-# RUN
 ############################################
 
 if __name__ == "__main__":
-
     evaluate()
